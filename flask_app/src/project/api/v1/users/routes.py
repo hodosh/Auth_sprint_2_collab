@@ -27,6 +27,8 @@ from project.schemas import (
     pagination_schema,
     paginated_history_schema,
 )
+from project.validators.email import EmailValidator
+from project.validators.password import PasswordValidator
 from . import users_api_blueprint
 
 
@@ -38,18 +40,19 @@ def register(kwargs):
     if not kwargs:
         abort(HTTPStatus.EXPECTATION_FAILED, 'cannot find email, password and password_confirm in data!')
     email = kwargs['email']
+
+    if not EmailValidator.validate(email=email):
+        abort(HTTPStatus.EXPECTATION_FAILED, 'email is non valid!')
+
     password = kwargs['password']
     password_confirm = kwargs['password_confirm']
+
+    if not PasswordValidator.validate(password1=password, password2=password_confirm):
+        abort(HTTPStatus.EXPECTATION_FAILED, 'passwords do not match')
 
     user = User.query.filter_by(email=email).first()
     if user:
         abort(HTTPStatus.EXPECTATION_FAILED, f'user with email={email} exists')
-
-    if not password:
-        abort(HTTPStatus.EXPECTATION_FAILED, 'password is not specified')
-
-    if password != password_confirm:
-        abort(HTTPStatus.EXPECTATION_FAILED, 'passwords do not match')
 
     new_user = User(email=email, password_plaintext=password)
 
