@@ -121,3 +121,11 @@ class TestUsers:
         assert list(response.body.keys()) == ['history', 'page', 'per_page']
         assert isinstance(response.body['history'], list)
         assert list(response.body['history'][0].keys()) == ['activity', 'created']
+
+    async def test_check_access(self, make_get_request, actual_token):
+        response = await make_get_request('/users/check_access', headers={'Authorization': f'Bearer {actual_token}'})
+
+        assert response.status == HTTPStatus.OK
+
+        assert response.body == {'message': 'Success'}
+        assert response.headers is not None

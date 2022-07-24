@@ -9,7 +9,7 @@ from flask_jwt_extended import jwt_required, get_jwt
 
 from project import database
 from project.core.permissions import USER_SELF, USER_ALL
-from project.extensions import check_access
+from project.extensions import check_access, jwt_redis_blocklist
 from project.models.models import (
     User,
     Role,
@@ -26,7 +26,10 @@ from project.schemas import (
     user_role_schema,
     pagination_schema,
     paginated_history_schema,
+    message_schema,
 )
+from project.validators.email import EmailValidator
+from project.validators.password import PasswordValidator
 from . import users_api_blueprint
 
 
@@ -38,18 +41,19 @@ def register(kwargs):
     if not kwargs:
         abort(HTTPStatus.EXPECTATION_FAILED, 'cannot find email, password and password_confirm in data!')
     email = kwargs['email']
+
+    if not EmailValidator.validate(email=email):
+        abort(HTTPStatus.EXPECTATION_FAILED, 'email is non valid!')
+
     password = kwargs['password']
     password_confirm = kwargs['password_confirm']
+
+    if not PasswordValidator.validate(password1=password, password2=password_confirm):
+        abort(HTTPStatus.EXPECTATION_FAILED, 'passwords do not match')
 
     user = User.query.filter_by(email=email).first()
     if user:
         abort(HTTPStatus.EXPECTATION_FAILED, f'user with email={email} exists')
-
-    if not password:
-        abort(HTTPStatus.EXPECTATION_FAILED, 'password is not specified')
-
-    if password != password_confirm:
-        abort(HTTPStatus.EXPECTATION_FAILED, 'passwords do not match')
 
     new_user = User(email=email, password_plaintext=password)
 
@@ -202,3 +206,28 @@ def get_user_session_history(kwargs, user_id: str):
         abort(HTTPStatus.NOT_FOUND, f'user with user_id={user_id} has no history yet!')
 
     return dict(history=user_history.items, page=page, per_page=per_page)
+
+
+@users_api_blueprint.route('/check_access', methods=['GET'])
+@jwt_required()
+@response(message_schema)
+def check_access():
+    """validate token"""
+    jwt = get_jwt()
+    jti = jwt['jti']
+    if jwt_redis_blocklist.get(jti):
+        abort(HTTPStatus.NOT_FOUND, 'token is revoked')
+
+    email = jwt['sub']
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        abort(HTTPStatus.NOT_FOUND, 'user not found')
+
+    if user.disabled:
+        abort(HTTPStatus.FORBIDDEN, 'user disabled')
+
+    role_id = jwt['role_id']
+    if not role_id:
+        abort(HTTPStatus.NOT_FOUND, 'user has no any access')
+
+    return dict(message='Success')
