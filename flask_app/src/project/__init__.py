@@ -13,6 +13,7 @@ from flask_jwt_extended import (
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from werkzeug.exceptions import HTTPException
 
 from project.core import config
@@ -55,7 +56,7 @@ def create_app():
     app.config['APIFAIRY_UI'] = 'swagger_ui'
 
     # Configure the PG DB
-    app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"  # noqa E501
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     initialize_extensions(app)
@@ -78,8 +79,8 @@ def initialize_extensions(app):
     database.init_app(app)
 
     app.config["JWT_SECRET_KEY"] = settings.SECRET_KEY  # Change this!
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = settings.ACCESS_EXPIRES
-    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = settings.REFRESH_EXPIRES
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(settings.ACCESS_EXPIRES_IN_HOURS)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(settings.REFRESH_EXPIRES_IN_DAYS)
     jwt.init_app(app=app)
 
     @app.after_request
@@ -97,6 +98,8 @@ def initialize_extensions(app):
 
     import project.models
     migrate.init_app(app, database)
+
+    # add tracer
 
 
 def register_blueprints(app):
@@ -134,3 +137,30 @@ def register_cli_command(app):
 
     app.cli.add_command(user_cli)
     app.cli.add_command(roles_cli)
+
+
+def configure_tracer(app):
+    from flask import request
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+
+    @app.before_request
+    def before_request():
+        request_id = request.headers.get('X-Request-Id')
+        if not request_id:
+            raise RuntimeError('request id is required')
+
+    trace.set_tracer_provider(TracerProvider())
+    trace.get_tracer_provider().add_span_processor(
+        BatchSpanProcessor(
+            JaegerExporter(
+                agent_host_name=settings.JAEGER_HOST,
+                agent_port=settings.JAEGER_PORT,
+            )
+        )
+    )
+    # Чтобы видеть трейсы в консоли
+    trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    FlaskInstrumentor().instrument_app(app)

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from http import HTTPStatus
 
 from apifairy import response, body
@@ -41,7 +42,7 @@ def logout():
     """Logout endpoint"""
     jwt = get_jwt()
     jti = jwt['jti']
-    jwt_redis_blocklist.set(jti, '', ex=settings.ACCESS_EXPIRES)
+    jwt_redis_blocklist.set(jti, '', ex=timedelta(settings.ACCESS_EXPIRES_IN_HOURS))
     email = jwt['sub']
     user = User.query.filter_by(email=email).first()
 
