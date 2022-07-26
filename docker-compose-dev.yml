@@ -4,7 +4,7 @@ services:
   auth_api:
     build: flask_app
     restart: always
-    container_name: flask_app
+    container_name: auth_api
     volumes:
       - ./flask_app/src:/usr/src/app
     env_file:
@@ -67,6 +67,18 @@ services:
         condition: service_started
     entrypoint: >
       sh -c "pytest src --html=results/report.html"
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - '6831:6831'
+      - '16686:16686'
+    restart: always
+    networks:
+      - api
+    depends_on:
+      - auth_api
 
 volumes:
   cache:
