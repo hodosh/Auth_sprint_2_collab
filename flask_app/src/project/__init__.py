@@ -63,6 +63,7 @@ def create_app():
     register_blueprints(app)
     register_error_handlers(app)
     register_cli_command(app)
+    configure_tracer(app)
 
     return app
 
