@@ -1,7 +1,6 @@
 import os
-from datetime import timedelta
 
-from pydantic import BaseSettings
+from pydantic import BaseSettings, Field
 
 
 class Settings(BaseSettings):
@@ -12,28 +11,29 @@ class Settings(BaseSettings):
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Database path
-    DB_USER = os.getenv('DB_USER', 'app')
-    DB_PASS = os.getenv('DB_PASS', '123qwe')
-    DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
+    DB_USER = Field(env='DB_USER', default='app')
+    DB_PASS = Field(env='DB_PASS', default='123qwe')
+    DB_HOST = Field(env='DB_HOST', default='127.0.0.1')
 
-    DB_NAME = os.getenv('DB_NAME', 'auth_database')
-    DB_TEST_NAME = os.getenv('DB_TEST_NAME', 'auth_database_test')
-    DB_PORT = os.getenv('DB_PORT', 5432)
+    DB_NAME = Field(env='DB_NAME', default='auth_database')
+    DB_TEST_NAME = Field(env='DB_TEST_NAME', default='auth_database_test')
+    DB_PORT = Field(env='DB_PORT', default=5432)
 
-    TESTING = os.getenv('TESTING', True)
+    TESTING = Field(env='TESTING', default=True)
 
-    FLASK_HOST = os.getenv('FLASK_HOST', '127.0.0.1')
-    FLASK_PORT = os.getenv('FLASK_PORT', 8000)
+    FLASK_HOST = Field(env='FLASK_HOST', default='127.0.0.1')
+    FLASK_PORT = Field(env='FLASK_PORT', default=8000)
 
-    REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
-    REDIS_PORT = os.getenv('REDIS_PORT', 6379)
-    REDIS_DB = os.getenv('REDIS_DB', 0)
+    REDIS_HOST = Field(env='REDIS_HOST', default='127.0.0.1')
+    REDIS_PORT = Field(env='REDIS_PORT', default=6379)
+    REDIS_DB = Field(env='REDIS_DB', default=0)
 
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
+    ACCESS_EXPIRES_IN_HOURS = Field(env='ACCESS_EXPIRES_IN_HOURS', default=1)
+    REFRESH_EXPIRES_IN_DAYS = Field(env='REFRESH_EXPIRES_IN_DAYS', default=1)
+    SECRET_KEY = Field(env='JWT_SECRET_KEY', default='secret_key')
 
-    ACCESS_EXPIRES = timedelta(hours=int(os.getenv('ACCESS_EXPIRES_IN_HOURS', 1)))
-    REFRESH_EXPIRES = timedelta(days=int(os.getenv('REFRESH_EXPIRES_IN_DAYS', 1)))
-    SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'secret_key')
+    JAEGER_HOST = Field(env='JAEGER_HOST', default='127.0.0.1')
+    JAEGER_PORT = Field(env='JAEGER_PORT', default=6831)
 
 
 settings = Settings()
