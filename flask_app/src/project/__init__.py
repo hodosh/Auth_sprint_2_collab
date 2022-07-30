@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone, timedelta
 
 from apifairy import APIFairy
@@ -50,6 +51,7 @@ def create_app():
     # Create the Flask application
     app = Flask(__name__)
 
+    app.secret_key = settings.SECRET_KEY or os.urandom(24)
     # Configure the API documentation
     app.config['APIFAIRY_TITLE'] = settings.PROJECT_NAME
     app.config['APIFAIRY_VERSION'] = '0.1'
@@ -63,7 +65,7 @@ def create_app():
     register_blueprints(app)
     register_error_handlers(app)
     register_cli_command(app)
-    configure_tracer(app)
+    # configure_tracer(app)
 
     return app
 
@@ -165,3 +167,15 @@ def configure_tracer(app):
     # Чтобы видеть трейсы в консоли
     trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
     FlaskInstrumentor().instrument_app(app)
+
+
+# def auth_social_networks(app):
+    # from authlib.integrations.flask_client import OAuth
+    # oauth = OAuth(app)
+    # oauth.register(
+    #     name='google',
+    #     server_metadata_url=settings.GOOGLE_DISCOVERY_URL,
+    #     client_kwargs={
+    #         'scope': 'openid email profile'
+    #     }
+    # )
