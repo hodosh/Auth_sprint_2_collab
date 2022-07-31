@@ -49,5 +49,11 @@ class Settings(BaseSettings):
     GOOGLE_JWKS_URI = Field(env='GOOGLE_JWKS_URI', default='https://www.googleapis.com/oauth2/v3/certs')
     GOOGLE_SCOPE = {'scope': 'openid email profile'}
 
+    YANDEX_CLIENT_ID = Field(env='YANDEX_CLIENT_ID', default='dea0b56b52af4c6c82b19280bda7e283')
+    YANDEX_CLIENT_SECRET = Field(env='YANDEX_CLIENT_SECRET', default='7e61f855d28647bb89a067ded81c8b4f')
+    YANDEX_BASE_URL = Field(env='YANDEX_BASE_URL', default='https://oauth.yandex.ru/')
+    YANDEX_LOGIN_INFO_URL = Field(env='YANDEX_LOGIN_INFO_URL', default='https://login.yandex.ru/info')
+
+
 
 settings = Settings()
