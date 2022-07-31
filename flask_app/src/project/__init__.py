@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone, timedelta
 
 from apifairy import APIFairy
@@ -50,6 +51,7 @@ def create_app():
     # Create the Flask application
     app = Flask(__name__)
 
+    app.secret_key = settings.SECRET_KEY or os.urandom(24)
     # Configure the API documentation
     app.config['APIFAIRY_TITLE'] = settings.PROJECT_NAME
     app.config['APIFAIRY_VERSION'] = '0.1'

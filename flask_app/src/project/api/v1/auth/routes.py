@@ -2,13 +2,14 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from apifairy import response, body
-from flask import abort
+from flask import abort, url_for, redirect
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required
 
 from project.core.config import settings
 from project.extensions import jwt_redis_blocklist, log_activity
 from project.models.models import User
 from project.schemas import token_schema, message_schema, login_schema
+from project.services.social_auth import ExternalAuthActions
 from . import auth_api_blueprint
 
 
@@ -50,3 +51,27 @@ def logout():
         abort(HTTPStatus.NOT_FOUND, f'user with email={email} not found')
     log_activity(user.id, 'login')
     return dict(message='Access token revoked')
+
+
+@auth_api_blueprint.route('/login/<provider>', methods=['GET'])
+def login_provider(provider: str):
+    """Login with Google+Yandex"""
+    ExternalAuthActions.login_redirect(provider)
+
+
+@auth_api_blueprint.route('/authorize/<provider>', methods=['GET'])
+def authorize(provider: str):
+    """Authorize with Google+Yandex"""
+    email = ExternalAuthActions.check_email(provider)
+    # check user in database
+    user = User.query.filter_by(email=email, disabled=False).first()
+
+    if not user:
+        reg_url = url_for('users.register')
+        return redirect(reg_url, 302)
+
+    additional_claims = {'role_id': user.role_id}
+    access_token = create_access_token(identity=email, additional_claims=additional_claims)
+    log_activity(user.id, f'login with {provider}')
+
+    return dict(token=access_token)
