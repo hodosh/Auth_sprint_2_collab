@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from apifairy import response, body
 from authlib.integrations.flask_client import OAuth
-from flask import abort, redirect, url_for, session
+from flask import abort, url_for, session
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required
 
 from app import app
@@ -19,13 +19,15 @@ google = oauth.register(
     name='google',
     client_id=settings.GOOGLE_CLIENT_ID,
     client_secret=settings.GOOGLE_CLIENT_SECRET,
-    access_token_url=settings.GOOGLE_TOKEN_URI,
+    access_token_url='https://accounts.google.com/o/oauth2/token',
     access_token_params=None,
-    authorize_url=settings.GOOGLE_AUTH_URI,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
-    api_base_url=settings.GOOGLE_PROVIDER_CERT_URL,
-    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',  # This is only needed if using openId to fetch user info
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
+    # This is only needed if using openId to fetch user info
     client_kwargs={'scope': 'openid email profile'},
+    jwks_uri="https://www.googleapis.com/oauth2/v3/certs",
 )
 
 
@@ -85,16 +87,20 @@ def login_google():
 
 
 @auth_api_blueprint.route('/authorize', methods=['GET'])
+@response(token_schema)
 def authorize():
-    print('start')
     google_client = oauth.create_client('google')  # create the google oauth client
     token = google_client.authorize_access_token()  # Access token from google (needed to get user info)
-    print(token)
-    resp = google_client.get('userinfo')  # userinfo contains stuff u specificed in the scrope
-    user_info = resp.json()
-    user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
-    # Here you use the profile/user data that you got and query your database find/register the user
-    # and set ur own data in the session not the profile from google
-    session['profile'] = user_info
-    session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
-    return redirect('/')
+
+    userinfo = oauth.google.userinfo()
+    email = userinfo['email']
+    user = User.query.filter_by(email=email, disabled=False).first()
+
+    if not user:
+        abort(HTTPStatus.NOT_FOUND, f'user with email={email} not found')
+
+    additional_claims = {'role_id': user.role_id}
+    access_token = create_access_token(identity=email, additional_claims=additional_claims)
+    log_activity(user.id, 'login with Google')
+
+    return dict(token=access_token)
