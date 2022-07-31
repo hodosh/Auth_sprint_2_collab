@@ -13,12 +13,6 @@ from project.services.social_auth import oauth, google_client
 from . import auth_api_blueprint
 
 
-@auth_api_blueprint.route('/')
-def hello_world():
-    email = dict(session)['profile']['email']
-    return f'Hello, you are logged in as {email}!'
-
-
 @auth_api_blueprint.route('/login', methods=['POST'])
 @body(login_schema)
 @response(token_schema)

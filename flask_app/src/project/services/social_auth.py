@@ -4,6 +4,8 @@ from app import app
 from project import settings
 
 oauth = OAuth(app)
+
+# register google auth
 google = oauth.register(
     name='google',
     client_id=settings.GOOGLE_CLIENT_ID,
@@ -17,5 +19,7 @@ google = oauth.register(
     client_kwargs=settings.GOOGLE_SCOPE,
     jwks_uri=settings.GOOGLE_JWKS_URI,
 )
-
+# create google client
 google_client = oauth.create_client('google')
+
+
