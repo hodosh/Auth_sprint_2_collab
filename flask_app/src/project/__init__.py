@@ -58,15 +58,14 @@ def create_app():
     app.config['APIFAIRY_UI'] = 'swagger_ui'
 
     # Configure the PG DB
-    app.config[
-        'SQLALCHEMY_DATABASE_URI'] = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"  # noqa E501
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"  # noqa E501
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     initialize_extensions(app)
     register_blueprints(app)
     register_error_handlers(app)
     register_cli_command(app)
-    # configure_tracer(app)
+    configure_tracer(app)
 
     return app
 
