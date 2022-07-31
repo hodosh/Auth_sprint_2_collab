@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from apifairy import response, body
 from authlib.integrations.flask_client import OAuth
-from flask import abort, url_for, session
+from flask import abort, url_for, session, redirect
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required
 
 from app import app
@@ -12,7 +12,6 @@ from project.extensions import jwt_redis_blocklist, log_activity
 from project.models.models import User
 from project.schemas import token_schema, message_schema, login_schema
 from . import auth_api_blueprint
-
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -87,7 +86,6 @@ def login_google():
 
 
 @auth_api_blueprint.route('/authorize', methods=['GET'])
-@response(token_schema)
 def authorize():
     google_client = oauth.create_client('google')  # create the google oauth client
     token = google_client.authorize_access_token()  # Access token from google (needed to get user info)
@@ -97,8 +95,11 @@ def authorize():
     user = User.query.filter_by(email=email, disabled=False).first()
 
     if not user:
-        abort(HTTPStatus.NOT_FOUND, f'user with email={email} not found')
+        reg_url = url_for('users.register')
+        return redirect(reg_url, 302)
 
+    session['profile'] = userinfo
+    session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
     additional_claims = {'role_id': user.role_id}
     access_token = create_access_token(identity=email, additional_claims=additional_claims)
     log_activity(user.id, 'login with Google')
