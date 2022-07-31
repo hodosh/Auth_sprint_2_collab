@@ -2,32 +2,15 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from apifairy import response, body
-from authlib.integrations.flask_client import OAuth
 from flask import abort, url_for, session, redirect
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required
 
-from app import app
 from project.core.config import settings
 from project.extensions import jwt_redis_blocklist, log_activity
 from project.models.models import User
 from project.schemas import token_schema, message_schema, login_schema
+from project.services.social_auth import oauth, google_client
 from . import auth_api_blueprint
-
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=settings.GOOGLE_CLIENT_ID,
-    client_secret=settings.GOOGLE_CLIENT_SECRET,
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
-    # This is only needed if using openId to fetch user info
-    client_kwargs={'scope': 'openid email profile'},
-    jwks_uri="https://www.googleapis.com/oauth2/v3/certs",
-)
 
 
 @auth_api_blueprint.route('/')
@@ -79,15 +62,14 @@ def logout():
 @auth_api_blueprint.route('/login/google', methods=['GET'])
 def login_google():
     """Login with Google"""
-    google_client = oauth.create_client('google')  # create the google oauth client
     redirect_uri = url_for('auth.authorize', _external=True)
     res = google_client.authorize_redirect(redirect_uri)
+
     return res
 
 
 @auth_api_blueprint.route('/authorize', methods=['GET'])
 def authorize():
-    google_client = oauth.create_client('google')  # create the google oauth client
     token = google_client.authorize_access_token()  # Access token from google (needed to get user info)
 
     userinfo = oauth.google.userinfo()

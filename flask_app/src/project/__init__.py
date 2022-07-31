@@ -58,7 +58,8 @@ def create_app():
     app.config['APIFAIRY_UI'] = 'swagger_ui'
 
     # Configure the PG DB
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"  # noqa E501
+    app.config[
+        'SQLALCHEMY_DATABASE_URI'] = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"  # noqa E501
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     initialize_extensions(app)
@@ -167,15 +168,3 @@ def configure_tracer(app):
     # Чтобы видеть трейсы в консоли
     trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
     FlaskInstrumentor().instrument_app(app)
-
-
-# def auth_social_networks(app):
-    # from authlib.integrations.flask_client import OAuth
-    # oauth = OAuth(app)
-    # oauth.register(
-    #     name='google',
-    #     server_metadata_url=settings.GOOGLE_DISCOVERY_URL,
-    #     client_kwargs={
-    #         'scope': 'openid email profile'
-    #     }
-    # )

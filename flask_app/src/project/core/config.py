@@ -41,9 +41,13 @@ class Settings(BaseSettings):
     GOOGLE_DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
     GOOGLE_PROJECT_ID = Field(env='GOOGLE_PROJECT_ID', default='yp-online-cinema')
     GOOGLE_AUTH_URI = Field(env='GOOGLE_AUTH_URI', default='https://accounts.google.com/o/oauth2/auth')
-    GOOGLE_TOKEN_URI = Field(env='GOOGLE_TOKEN_URI', default='https://oauth2.googleapis.com/token')
+    GOOGLE_TOKEN_URI = Field(env='GOOGLE_TOKEN_URI', default='https://accounts.google.com/o/oauth2/token')
     GOOGLE_PROVIDER_CERT_URL = Field(env='GOOGLE_PROVIDER_CERT_URL',
                                      default='https://www.googleapis.com/oauth2/v1/certs')
+    GOOGLE_API_BASE_URL = Field(env='GOOGLE_API_BASE_URL', default='https://www.googleapis.com/oauth2/v1/')
+    GOOGLE_USERINFO_URL = Field(env='GOOGLE_USERINFO_URL', default='https://openidconnect.googleapis.com/v1/userinfo')
+    GOOGLE_JWKS_URI = Field(env='GOOGLE_JWKS_URI', default='https://www.googleapis.com/oauth2/v3/certs')
+    GOOGLE_SCOPE = {'scope': 'openid email profile'}
 
 
 settings = Settings()
