@@ -215,7 +215,8 @@ class UserHistory(IDMixin, CreatedMixin, database.Model):
 
     platform = database.Column(database.String,
                                unique=False,
-                               nullable=False)
+                               nullable=False,
+                               server_default='other')
 
     def __init__(self, user_id: str, activity: str, platform: str):
         self.user_id = user_id
