@@ -3,10 +3,11 @@ import uuid
 from datetime import datetime, timedelta
 from http import HTTPStatus
 
+from flask import abort
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask import abort
 
 from project import database
 from project.core.roles import USER_DEFAULT_ROLE
@@ -171,8 +172,37 @@ class RolePermission(IDMixin, CreatedMixin, database.Model):
         return f'<RolePermission {self.id}>'
 
 
+def create_partition(target, connection, **kw) -> None:
+    """ creating partition by user_history """
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "user_history_unknown" PARTITION OF "user_history" FOR VALUES IN ('unknown')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "user_history_windows" PARTITION OF "user_history" FOR VALUES IN ('windows')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "user_history_linux" PARTITION OF "user_history" FOR VALUES IN ('linux')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "user_history_macos" PARTITION OF "user_history" FOR VALUES IN ('macos')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "user_history_ios" PARTITION OF "user_history" FOR VALUES IN ('ios')"""
+    )
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS "user_history_android" PARTITION OF "user_history" FOR VALUES IN ('android')"""
+    )
+
+
 class UserHistory(IDMixin, CreatedMixin, database.Model):
     __tablename__ = 'user_history'
+    __table_args__ = (
+        UniqueConstraint('id', 'platform'),
+        {
+            'postgresql_partition_by': 'LIST (platform)',
+            'listeners': [('after_create', create_partition)],
+        }
+    )
 
     user_id = database.Column(UUID(as_uuid=True),
                               database.ForeignKey('users.id', ondelete='CASCADE'),
@@ -183,9 +213,14 @@ class UserHistory(IDMixin, CreatedMixin, database.Model):
                                unique=False,
                                nullable=False)
 
-    def __init__(self, user_id: str, activity: str):
+    platform = database.Column(database.String,
+                               unique=False,
+                               nullable=False)
+
+    def __init__(self, user_id: str, activity: str, platform: str):
         self.user_id = user_id
         self.activity = activity
+        self.platform = platform
 
     def __repr__(self):
         return f'<UserHistory {self.id}>'
