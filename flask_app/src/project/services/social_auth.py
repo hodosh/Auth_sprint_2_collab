@@ -50,8 +50,8 @@ class GoogleProvider(BaseProvider):
 
     @staticmethod
     def login_redirect():
-        return redirect(
-            settings.YANDEX_BASE_URL + f'authorize?response_type=code&client_id={settings.YANDEX_CLIENT_ID}')
+        redirect_uri = url_for('auth.authorize_google', _external=True)
+        return google_client.authorize_redirect(redirect_uri)
 
     @staticmethod
     def check_response_and_get_email() -> str:
@@ -67,8 +67,8 @@ class YandexProvider(BaseProvider):
 
     @staticmethod
     def login_redirect():
-        redirect_uri = url_for('auth.authorize_google', _external=True)
-        return google_client.authorize_redirect(redirect_uri)
+        return redirect(
+            settings.YANDEX_BASE_URL + f'authorize?response_type=code&client_id={settings.YANDEX_CLIENT_ID}')
 
     @staticmethod
     def check_response_and_get_email() -> str:
