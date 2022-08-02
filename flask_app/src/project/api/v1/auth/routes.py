@@ -58,7 +58,7 @@ def logout():
 @auth_api_blueprint.route('/login/<provider>', methods=['GET'])
 def login_provider(provider: str):
     """Login with Google+Yandex"""
-    ExternalAuthActions.login_redirect(provider)
+    return ExternalAuthActions.login_redirect(provider)
 
 
 @auth_api_blueprint.route('/authorize/<provider>', methods=['GET'])
