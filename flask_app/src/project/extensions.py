@@ -25,8 +25,8 @@ def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
     return token_in_redis is not None
 
 
-def log_activity(user_id: str, activity: str):
-    user_history = UserHistory(user_id=user_id, activity=activity)
+def log_activity(user_id: str, activity: str, platform: str = 'other'):
+    user_history = UserHistory(user_id=user_id, activity=activity, platform=platform)
     database.session.add(user_history)
     database.session.commit()
 

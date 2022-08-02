@@ -1,33 +1,16 @@
+import json
 from abc import ABC, abstractmethod
 from http import HTTPStatus
 from urllib.parse import urlencode
 
 import requests
-from authlib.integrations.flask_client import OAuth
 from flask import url_for, request, redirect, abort
+from oauthlib.oauth2 import WebApplicationClient
 from requests import post
 
-from app import app
 from project import settings
 
-oauth = OAuth(app)
-
-# register google auth
-google = oauth.register(
-    name='google',
-    client_id=settings.GOOGLE_CLIENT_ID,
-    client_secret=settings.GOOGLE_CLIENT_SECRET,
-    access_token_url=settings.GOOGLE_TOKEN_URI,
-    access_token_params=None,
-    authorize_url=settings.GOOGLE_AUTH_URI,
-    authorize_params=None,
-    api_base_url=settings.GOOGLE_API_BASE_URL,
-    userinfo_endpoint=settings.GOOGLE_USERINFO_URL,  # This is only needed if using openId to fetch user info
-    client_kwargs=settings.GOOGLE_SCOPE,
-    jwks_uri=settings.GOOGLE_JWKS_URI,
-)
-# create google client
-google_client = oauth.create_client('google')
+client = WebApplicationClient(settings.GOOGLE_CLIENT_ID)
 
 
 class BaseProvider(ABC):
@@ -49,15 +32,56 @@ class GoogleProvider(BaseProvider):
         self.provider_name = provider_name
 
     @staticmethod
-    def login_redirect():
-        return redirect(
-            settings.YANDEX_BASE_URL + f'authorize?response_type=code&client_id={settings.YANDEX_CLIENT_ID}')
+    def get_google_provider_cfg():
+        return requests.get(settings.GOOGLE_DISCOVERY_URL).json()
 
-    @staticmethod
-    def check_response_and_get_email() -> str:
-        token = google_client.authorize_access_token()  # Access token from google (needed to get user info)
-        userinfo = oauth.google.userinfo()
-        return userinfo['email']
+    @classmethod
+    def login_redirect(cls):
+        # Find out what URL to hit for Google login
+        google_provider_cfg = cls.get_google_provider_cfg()
+        authorization_endpoint = google_provider_cfg['authorization_endpoint']
+
+        # Use library to construct the request for Google login and provide
+        # scopes that let you retrieve user's profile from Google
+        request_uri = client.prepare_request_uri(
+            authorization_endpoint,
+            redirect_uri=f'{settings.FLASK_HOST}:{settings.FLASK_PORT}{url_for("auth.authorize_google")}',
+            scope=settings.GOOGLE_SCOPE,
+        )
+
+        return redirect(request_uri)
+
+    @classmethod
+    def check_response_and_get_email(cls) -> str:
+        code = request.args.get('code')
+        google_provider_cfg = cls.get_google_provider_cfg()
+        token_endpoint = google_provider_cfg["token_endpoint"]
+        token_url, headers, body = client.prepare_token_request(
+            token_endpoint,
+            authorization_response=request.url,
+            redirect_url=request.base_url,
+            code=code
+        )
+        token_response = requests.post(
+            token_url,
+            headers=headers,
+            data=body,
+            auth=(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET),
+        )
+
+        # Parse the tokens!
+        client.parse_request_body_response(json.dumps(token_response.json()))
+        # Now that you have tokens (yay) let's find and hit the URL
+        # from Google that gives you the user's profile information,
+        # including their Google profile image and email
+        userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+        uri, headers, body = client.add_token(userinfo_endpoint)
+        userinfo_response = requests.get(uri, headers=headers, data=body)
+        # You want to make sure their email is verified.
+        # The user authenticated with Google, authorized your
+        # app, and now you've verified their email through Google!
+        users_email = userinfo_response.json()['email']
+        return users_email
 
 
 class YandexProvider(BaseProvider):
@@ -67,8 +91,8 @@ class YandexProvider(BaseProvider):
 
     @staticmethod
     def login_redirect():
-        redirect_uri = url_for('auth.authorize_google', _external=True)
-        return google_client.authorize_redirect(redirect_uri)
+        return redirect(
+            settings.YANDEX_BASE_URL + f'authorize?response_type=code&client_id={settings.YANDEX_CLIENT_ID}')
 
     @staticmethod
     def check_response_and_get_email() -> str:

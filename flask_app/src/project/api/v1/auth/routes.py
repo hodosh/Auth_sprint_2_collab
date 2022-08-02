@@ -2,7 +2,7 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from apifairy import response, body
-from flask import abort, url_for, redirect
+from flask import abort, url_for, redirect, request
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required
 
 from project.core.config import settings
@@ -10,6 +10,7 @@ from project.extensions import jwt_redis_blocklist, log_activity
 from project.models.models import User
 from project.schemas import token_schema, message_schema, login_schema
 from project.services.social_auth import ExternalAuthActions
+from project.utils.parsed_user_agent import get_platform
 from . import auth_api_blueprint
 
 
@@ -32,7 +33,8 @@ def login(kwargs):
         abort(HTTPStatus.EXPECTATION_FAILED, 'password is incorrect')
     additional_claims = {'role_id': user.role_id}
     access_token = create_access_token(identity=email, additional_claims=additional_claims)
-    log_activity(user.id, 'login')
+
+    log_activity(user_id=user.id, activity='login', platform=get_platform(request.user_agent.string))
     return dict(token=access_token)
 
 
@@ -49,7 +51,7 @@ def logout():
 
     if not user:
         abort(HTTPStatus.NOT_FOUND, f'user with email={email} not found')
-    log_activity(user.id, 'login')
+    log_activity(user_id=user.id, activity='logout', platform=get_platform(request.user_agent.string))
     return dict(message='Access token revoked')
 
 
@@ -72,6 +74,6 @@ def authorize(provider: str):
 
     additional_claims = {'role_id': user.role_id}
     access_token = create_access_token(identity=email, additional_claims=additional_claims)
-    log_activity(user.id, f'login with {provider}')
 
+    log_activity(user_id=user.id, activity=f'login with {provider}', platform=get_platform(request.user_agent.string))
     return dict(token=access_token)
