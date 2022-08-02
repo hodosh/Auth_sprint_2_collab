@@ -10,6 +10,7 @@ from project.extensions import check_access
 from project.models.models import Role, RolePermission
 from project.schemas import role_schema, new_role_schema
 from project.schemas.role import ShortRoleSchema
+from project.utils.rate_limiter import rate_limit
 from . import role_api_blueprint
 
 
@@ -17,6 +18,7 @@ from . import role_api_blueprint
 @jwt_required()
 @body(new_role_schema)
 @response(role_schema, 200)
+@rate_limit()
 @check_access([ROLE_SELF.CREATE, ROLE_ALL.CREATE])
 def create_role(kwargs: dict):
     """Create new role"""
@@ -43,6 +45,7 @@ def create_role(kwargs: dict):
 @jwt_required()
 @body(new_role_schema)
 @response(role_schema, 200)
+@rate_limit()
 @check_access([ROLE_SELF.UPDATE, ROLE_ALL.UPDATE])
 def update_role(kwargs: dict, role_id: str):
     """Update role & its permissions"""
@@ -67,6 +70,7 @@ def update_role(kwargs: dict, role_id: str):
 @role_api_blueprint.route('/', methods=['GET'])
 @jwt_required()
 @response(ShortRoleSchema(many=True), 200)
+@rate_limit()
 @check_access([ROLE_SELF.READ, ROLE_ALL.READ])
 def get_all_roles():
     """List all roles"""
@@ -80,6 +84,7 @@ def get_all_roles():
 @role_api_blueprint.route('/<role_id>', methods=['GET'])
 @jwt_required()
 @response(role_schema, 200)
+@rate_limit()
 @check_access([ROLE_SELF.READ, ROLE_ALL.READ])
 def get_role(role_id: str):
     """Get role info"""
@@ -95,6 +100,7 @@ def get_role(role_id: str):
 @role_api_blueprint.route('/<role_id>', methods=['DELETE'])
 @jwt_required()
 @response(role_schema, 200)
+@rate_limit()
 @check_access([ROLE_SELF.DELETE, ROLE_ALL.DELETE])
 def delete_role(role_id: str):
     """Delete role"""

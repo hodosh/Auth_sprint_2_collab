@@ -28,6 +28,7 @@ from project.schemas import (
     paginated_history_schema,
     message_schema,
 )
+from project.utils.rate_limiter import rate_limit
 from project.validators.email import EmailValidator
 from project.validators.password import PasswordValidator
 from . import users_api_blueprint
@@ -118,6 +119,7 @@ def disable_user(user_id: str):
 @users_api_blueprint.route('/', methods=['GET'])
 @jwt_required()
 @response(UserSchema(many=True), 200)
+@rate_limit()
 @check_access(USER_ALL.READ)
 def get_all_users():
     """Disable user"""
@@ -131,6 +133,7 @@ def get_all_users():
 @users_api_blueprint.route('/<user_id>', methods=['GET'])
 @jwt_required()
 @response(user_schema, 200)
+@rate_limit()
 @check_access(USER_SELF.READ)
 def get_user(user_id: str):
     """Get user info"""
@@ -144,6 +147,7 @@ def get_user(user_id: str):
 @users_api_blueprint.route('/<user_id>/role', methods=['GET'])
 @jwt_required()
 @response(new_role_schema, 200)
+@rate_limit()
 @check_access([USER_SELF.READ])
 def get_user_role(user_id: str):
     """Get user's role info"""
@@ -170,6 +174,7 @@ def get_user_role(user_id: str):
 @users_api_blueprint.route('/<user_id>/role/<role_id>', methods=['PUT'])
 @jwt_required()
 @response(user_role_schema, 200)
+@rate_limit()
 @check_access([USER_SELF.UPDATE, USER_ALL.UPDATE])
 def set_user_role(user_id: str, role_id: str):
     """Set new role to user"""
@@ -195,6 +200,7 @@ def set_user_role(user_id: str, role_id: str):
 @jwt_required()
 @body(pagination_schema)
 @response(paginated_history_schema, 200)
+@rate_limit()
 @check_access([USER_SELF.READ, USER_ALL.READ])
 def get_user_session_history(kwargs, user_id: str):
     """Get user's history"""
@@ -210,6 +216,7 @@ def get_user_session_history(kwargs, user_id: str):
 
 @users_api_blueprint.route('/check_access', methods=['GET'])
 @jwt_required()
+@rate_limit()
 @response(message_schema)
 def check_access():
     """validate token"""
