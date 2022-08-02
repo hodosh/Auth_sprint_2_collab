@@ -55,5 +55,4 @@ class Settings(BaseSettings):
     YANDEX_LOGIN_INFO_URL = Field(env='YANDEX_LOGIN_INFO_URL', default='https://login.yandex.ru/info')
 
 
-
 settings = Settings()
