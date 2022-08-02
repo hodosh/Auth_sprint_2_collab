@@ -21,8 +21,8 @@ class Settings(BaseSettings):
 
     TESTING = Field(env='TESTING', default=True)
 
-    FLASK_HOST = Field(env='FLASK_HOST', default='127.0.0.1')
-    FLASK_PORT = Field(env='FLASK_PORT', default=8000)
+    FLASK_HOST = Field(env='FLASK_HOST', default='http://127.0.0.1')
+    FLASK_PORT = Field(env='FLASK_PORT', default=5000)
 
     REDIS_HOST = Field(env='REDIS_HOST', default='127.0.0.1')
     REDIS_PORT = Field(env='REDIS_PORT', default=6379)
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     GOOGLE_API_BASE_URL = Field(env='GOOGLE_API_BASE_URL', default='https://www.googleapis.com/oauth2/v1/')
     GOOGLE_USERINFO_URL = Field(env='GOOGLE_USERINFO_URL', default='https://openidconnect.googleapis.com/v1/userinfo')
     GOOGLE_JWKS_URI = Field(env='GOOGLE_JWKS_URI', default='https://www.googleapis.com/oauth2/v3/certs')
-    GOOGLE_SCOPE = {'scope': 'openid email profile'}
+    GOOGLE_SCOPE = ["openid", "email", "profile"]
 
     YANDEX_CLIENT_ID = Field(env='YANDEX_CLIENT_ID', default='dea0b56b52af4c6c82b19280bda7e283')
     YANDEX_CLIENT_SECRET = Field(env='YANDEX_CLIENT_SECRET', default='7e61f855d28647bb89a067ded81c8b4f')

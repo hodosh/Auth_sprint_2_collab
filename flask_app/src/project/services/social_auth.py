@@ -45,7 +45,7 @@ class GoogleProvider(BaseProvider):
         # scopes that let you retrieve user's profile from Google
         request_uri = client.prepare_request_uri(
             authorization_endpoint,
-            redirect_uri=f'{settings.FLASK_HOST}:{settings.FLASK_PORT}{url_for("auth.authorize_google")}',
+            redirect_uri=f'{settings.FLASK_HOST}:{settings.FLASK_PORT}{url_for("auth.authorize", provider="google")}',
             scope=settings.GOOGLE_SCOPE,
         )
 
