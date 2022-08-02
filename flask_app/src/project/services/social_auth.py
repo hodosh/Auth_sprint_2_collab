@@ -100,7 +100,7 @@ class YandexProvider(BaseProvider):
             'grant_type': 'authorization_code',
             'code': request.args.get('code'),
             'client_id': settings.YANDEX_CLIENT_ID,
-            'client_secret': settings.GOOGLE_CLIENT_SECRET,
+            'client_secret': settings.YANDEX_CLIENT_SECRET,
         }
         data = urlencode(data)
         resp = post(settings.YANDEX_BASE_URL + 'token', data).json()
