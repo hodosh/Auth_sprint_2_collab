@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timezone, timedelta
 
+import redis
 from apifairy import APIFairy
 from flask import Flask, json
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
@@ -34,6 +35,7 @@ migrate = Migrate()
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 jwt = JWTManager()
+redis = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 
 
 # ------------
