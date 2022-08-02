@@ -143,6 +143,9 @@ def register_cli_command(app):
 
 
 def configure_tracer(app):
+    if settings.TRACING_OFF:
+        return
+
     from flask import request
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider

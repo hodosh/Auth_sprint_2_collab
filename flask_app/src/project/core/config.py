@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     REFRESH_EXPIRES_IN_DAYS = Field(env='REFRESH_EXPIRES_IN_DAYS', default=1)
     SECRET_KEY = Field(env='JWT_SECRET_KEY', default='secret_key')
 
+    TRACING_OFF = Field(env='TURN_OFF_TRACING', default=True)
     JAEGER_HOST = Field(env='JAEGER_HOST', default='127.0.0.1')
     JAEGER_PORT = Field(env='JAEGER_PORT', default=6831)
 
