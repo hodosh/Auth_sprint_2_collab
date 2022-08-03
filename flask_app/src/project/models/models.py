@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from project import database
+from project import database, settings
 from project.core.roles import USER_DEFAULT_ROLE
 
 
@@ -177,21 +177,10 @@ def create_partition(target, connection, **kw) -> None:
     connection.execute(
         """CREATE TABLE IF NOT EXISTS "user_history_unknown" PARTITION OF "user_history" FOR VALUES IN ('unknown')"""
     )
-    connection.execute(
-        """CREATE TABLE IF NOT EXISTS "user_history_windows" PARTITION OF "user_history" FOR VALUES IN ('windows')"""
-    )
-    connection.execute(
-        """CREATE TABLE IF NOT EXISTS "user_history_linux" PARTITION OF "user_history" FOR VALUES IN ('linux')"""
-    )
-    connection.execute(
-        """CREATE TABLE IF NOT EXISTS "user_history_macos" PARTITION OF "user_history" FOR VALUES IN ('macos')"""
-    )
-    connection.execute(
-        """CREATE TABLE IF NOT EXISTS "user_history_ios" PARTITION OF "user_history" FOR VALUES IN ('ios')"""
-    )
-    connection.execute(
-        """CREATE TABLE IF NOT EXISTS "user_history_android" PARTITION OF "user_history" FOR VALUES IN ('android')"""
-    )
+    for platform in settings.PLATFORMS_TUPLE:
+        connection.execute(
+            f"""CREATE TABLE IF NOT EXISTS "user_history_{platform}" PARTITION OF "user_history" FOR VALUES IN ('{platform}')"""  # noqa E501
+        )
 
 
 class UserHistory(IDMixin, CreatedMixin, database.Model):
