@@ -2,33 +2,34 @@ import time
 from functools import wraps
 from http import HTTPStatus
 
-from flask import abort
+from flask import abort, request
 from flask_jwt_extended import get_jwt
 
 from project import redis
-from project.models.models import User
 
 
-def rate_limit(limit=10, interval=60):
+def rate_limit(limit: int = 10, interval: int = 60, by_email: bool = False, by_ip: bool = False):
     def rate_limit_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            email = get_jwt()['sub']
-            user = User.query.filter_by(email=email).first()
-            if not user:
-                abort(HTTPStatus.NOT_FOUND, f'User with email={email} not found')
+            if by_email or by_ip:
+                prefix = ''
+                if by_email:
+                    email = get_jwt()['sub']
+                    prefix = f'{prefix}{email}:'
+                if by_ip:
+                    prefix = f'{prefix}{request.remote_addr}:'
+                t = int(time.time())
+                closest_minute = t - (t % interval)
+                key = f'{prefix}{closest_minute}'
+                current = redis.get(key)
+                if current and int(current) > limit:
+                    abort(HTTPStatus.TOO_MANY_REQUESTS, f'Too many requests for {prefix}')
 
-            t = int(time.time())
-            closest_minute = t - (t % interval)
-            key = f'{user.id}:{closest_minute}'
-            current = redis.get(key)
-            if current and int(current) > limit:
-                abort(HTTPStatus.TOO_MANY_REQUESTS, f'Too many requests for {email}')
-
-            pipe = redis.pipeline()
-            pipe.incr(key, 1)
-            pipe.expire(key, interval + 1)
-            pipe.execute()
+                pipe = redis.pipeline()
+                pipe.incr(key, 1)
+                pipe.expire(key, interval + 1)
+                pipe.execute()
 
             return f(*args, **kwargs)
 
