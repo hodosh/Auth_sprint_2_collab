@@ -145,6 +145,7 @@ def register_cli_command(app):
 
 
 def configure_tracer(app):
+    # проверяем, что трейсер отключен (настройка для разработки, чтобы не использовать nginx)
     if settings.TRACING_OFF:
         return
 

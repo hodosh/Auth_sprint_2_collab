@@ -28,6 +28,11 @@ class ParsedUserAgent(UserAgent):
 
 
 def get_platform(user_agent: str) -> str:
+    """
+    Метод вычитки платформы, с которой поступил запрос
+    @param user_agent: строка user_agent из запроса
+    @return: тип платформы в соответствии с описанными ограничениями
+    """
     platform = ParsedUserAgent(user_agent).platform.lower()
     if platform not in settings.PLATFORMS_TUPLE:
         return 'other'
