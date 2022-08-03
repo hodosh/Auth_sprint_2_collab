@@ -11,10 +11,12 @@ from project.models.models import User
 from project.schemas import token_schema, message_schema, login_schema
 from project.services.social_auth import ExternalAuthActions
 from project.utils.parsed_user_agent import get_platform
+from project.utils.rate_limiter import rate_limit
 from . import auth_api_blueprint
 
 
 @auth_api_blueprint.route('/login', methods=['POST'])
+@rate_limit(by_ip=True)
 @body(login_schema)
 @response(token_schema)
 def login(kwargs):
@@ -40,6 +42,7 @@ def login(kwargs):
 
 @auth_api_blueprint.route('/logout', methods=['DELETE'])
 @jwt_required()
+@rate_limit(by_email=True, by_ip=True)
 @response(message_schema)
 def logout():
     """Logout endpoint"""
@@ -56,12 +59,14 @@ def logout():
 
 
 @auth_api_blueprint.route('/login/<provider>', methods=['GET'])
+@rate_limit(by_ip=True)
 def login_provider(provider: str):
     """Login with Google+Yandex"""
     return ExternalAuthActions.login_redirect(provider)
 
 
 @auth_api_blueprint.route('/authorize/<provider>', methods=['GET'])
+@rate_limit(by_ip=True)
 def authorize(provider: str):
     """Authorize with Google+Yandex"""
     email = ExternalAuthActions.check_email(provider)
