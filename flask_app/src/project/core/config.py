@@ -55,5 +55,7 @@ class Settings(BaseSettings):
     YANDEX_BASE_URL = Field(env='YANDEX_BASE_URL', default='https://oauth.yandex.ru/')
     YANDEX_LOGIN_INFO_URL = Field(env='YANDEX_LOGIN_INFO_URL', default='https://login.yandex.ru/info')
 
+    PLATFORMS_TUPLE = ('windows', 'linux', 'macos', 'ios', 'android')
+
 
 settings = Settings()
