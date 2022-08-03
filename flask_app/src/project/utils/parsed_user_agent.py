@@ -2,7 +2,7 @@ from ua_parser import user_agent_parser
 from werkzeug.user_agent import UserAgent
 from werkzeug.utils import cached_property
 
-PLATFORMS_TUPLE = ('windows', 'linux', 'macos', 'ios', 'android')
+from project import settings
 
 
 class ParsedUserAgent(UserAgent):
@@ -29,7 +29,7 @@ class ParsedUserAgent(UserAgent):
 
 def get_platform(user_agent: str) -> str:
     platform = ParsedUserAgent(user_agent).platform.lower()
-    if platform not in PLATFORMS_TUPLE:
+    if platform not in settings.PLATFORMS_TUPLE:
         return 'other'
 
     return platform
