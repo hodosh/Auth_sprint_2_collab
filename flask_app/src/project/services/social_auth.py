@@ -31,8 +31,8 @@ class GoogleProvider(BaseProvider):
         super().__init__(provider_name)
         self.provider_name = provider_name
 
-    @staticmethod
-    def get_google_provider_cfg():
+    @classmethod
+    def get_google_provider_cfg(cls):
         return requests.get(settings.GOOGLE_DISCOVERY_URL).json()
 
     @classmethod
@@ -89,13 +89,13 @@ class YandexProvider(BaseProvider):
         super().__init__(provider_name)
         self.provider_name = provider_name
 
-    @staticmethod
-    def login_redirect():
+    @classmethod
+    def login_redirect(cls):
         return redirect(
             settings.YANDEX_BASE_URL + f'authorize?response_type=code&client_id={settings.YANDEX_CLIENT_ID}')
 
-    @staticmethod
-    def check_response_and_get_email() -> str:
+    @classmethod
+    def check_response_and_get_email(cls) -> str:
         data = {
             'grant_type': 'authorization_code',
             'code': request.args.get('code'),
@@ -119,8 +119,8 @@ class YandexProvider(BaseProvider):
 
 class ExternalAuthActions:
 
-    @staticmethod
-    def get_provider_instance(provider_name: str) -> BaseProvider:
+    @classmethod
+    def get_provider_instance(cls, provider_name: str) -> BaseProvider:
         """
         Метод для получения класса конкретного провайдера по его имени
         """
@@ -133,16 +133,16 @@ class ExternalAuthActions:
         else:
             abort(HTTPStatus.NOT_FOUND, f'wrong type of provider: {provider_name}')
 
-    @staticmethod
-    def login_redirect(provider_name: str):
+    @classmethod
+    def login_redirect(cls, provider_name: str):
         """
         Метод перенаправляет логин на внешний сервис по имени провайдера
         """
         provider = ExternalAuthActions.get_provider_instance(provider_name)
         return provider.login_redirect()
 
-    @staticmethod
-    def check_email(provider_name: str):
+    @classmethod
+    def check_email(cls, provider_name: str):
         """
         Метод проверяет ответ (его правомерность) и возвращает почтовый ящик
         """
