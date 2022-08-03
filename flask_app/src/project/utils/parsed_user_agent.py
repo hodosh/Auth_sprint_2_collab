@@ -28,7 +28,7 @@ class ParsedUserAgent(UserAgent):
 
 
 def get_platform(user_agent: str) -> str:
-    platform = ParsedUserAgent(user_agent).platform
+    platform = ParsedUserAgent(user_agent).platform.lower()
     if platform not in PLATFORMS_TUPLE:
         return 'other'
 
