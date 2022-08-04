@@ -100,6 +100,8 @@ Redis используется для хранения отозванных то
 
 ## Запуск приложения в докере
 
+!!! Создать сеть выполнением команды `docker network create -d bridge api`
+
 **Prod** - docker-compose.yml
 
 **Dev** - docker-compose-dev.yml (с дополнительным контейнером тестов)
