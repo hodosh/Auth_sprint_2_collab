@@ -1,0 +1,104 @@
+version: '3.9'
+
+services:
+  auth_api:
+    build: flask_app
+    restart: always
+    container_name: auth_api
+    volumes:
+      - ./flask_app/src:/usr/src/app
+    env_file:
+      - flask_app/src/project/core/.env
+    command: python pywsgi.py
+    ports:
+      - "5000:5000"
+    networks:
+      - api
+    depends_on:
+      auth_db:
+        condition: service_healthy
+
+  auth_db:
+    image: postgres:13-alpine3.16
+    restart: always
+    container_name: auth_db
+    ports:
+      - "5432:5432"
+    env_file:
+      - database/.env
+    volumes:
+      - ./database/init_data/:/docker-entrypoint-initdb.d/
+      - ./database/data:/var/lib/postgresql/data/
+    networks:
+      - api
+    healthcheck:
+      test: [ "CMD-SHELL", "su postgres", "&&", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:6.2.6
+    restart: always
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - cache:/data
+    networks:
+      - api
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+
+  tests:
+    build: tests/functional
+    env_file:
+      - ./tests/functional/.env
+    networks:
+      - api
+    volumes:
+      - ./tests/functional/results:/results
+    depends_on:
+      auth_api:
+        condition: service_started
+    entrypoint: >
+      sh -c "pytest src --html=results/report.html"
+
+  nginx:
+    image: nginx:1.21.6
+    restart: always
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/configs:/etc/nginx/conf.d:ro
+    ports:
+      - "80:80"
+    networks:
+      - api
+    depends_on:
+      - auth_api
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - '6831:6831/udp'
+      - '16686:16686'
+    restart: always
+    networks:
+      - api
+    depends_on:
+      - auth_api
+      - nginx
+
+volumes:
+  cache:
+    driver: local
+
+networks:
+  api:
+    external: true
