@@ -18,7 +18,6 @@ from flask_sqlalchemy import SQLAlchemy
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from werkzeug.exceptions import HTTPException
 
-from project.core import config
 # Create the instances of the Flask extensions in the global scope,
 # but without any arguments passed in. These instances are not
 # attached to the Flask application at this point.

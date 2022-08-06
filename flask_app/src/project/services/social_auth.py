@@ -4,7 +4,12 @@ from http import HTTPStatus
 from urllib.parse import urlencode
 
 import requests
-from flask import url_for, request, redirect, abort
+from flask import (
+    url_for,
+    request,
+    redirect,
+    abort,
+)
 from oauthlib.oauth2 import WebApplicationClient
 from requests import post
 
@@ -27,9 +32,6 @@ class BaseProvider(ABC):
 
 
 class GoogleProvider(BaseProvider):
-    def __init__(self, provider_name: str):
-        super().__init__(provider_name)
-        self.provider_name = provider_name
 
     @classmethod
     def get_google_provider_cfg(cls):
@@ -78,9 +80,6 @@ class GoogleProvider(BaseProvider):
 
 
 class YandexProvider(BaseProvider):
-    def __init__(self, provider_name: str):
-        super().__init__(provider_name)
-        self.provider_name = provider_name
 
     @classmethod
     def login_redirect(cls):
