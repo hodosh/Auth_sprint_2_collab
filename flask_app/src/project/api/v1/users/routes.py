@@ -36,7 +36,7 @@ from . import users_api_blueprint
 
 @users_api_blueprint.route('/register', methods=['POST'])
 @body(new_user_schema)
-@response(user_schema, 201)
+@response(user_schema, HTTPStatus.CREATED)
 def register(kwargs):
     """Create a new user"""
     if not kwargs:
@@ -67,7 +67,7 @@ def register(kwargs):
 @users_api_blueprint.route('/<user_id>', methods=['POST'])
 @jwt_required()
 @body(update_user_schema)
-@response(user_schema, 201)
+@response(user_schema, HTTPStatus.OK)
 @check_access(USER_SELF.UPDATE)
 def update_user(kwargs, user_id: str):
     """Update user info"""
@@ -102,7 +102,7 @@ def update_user(kwargs, user_id: str):
 
 @users_api_blueprint.route('/<user_id>', methods=['DELETE'])
 @jwt_required()
-@response(user_schema, 200)
+@response(user_schema, HTTPStatus.OK)
 @check_access(USER_ALL.DELETE)
 def disable_user(user_id: str):
     """Disable user"""
@@ -118,7 +118,7 @@ def disable_user(user_id: str):
 
 @users_api_blueprint.route('/', methods=['GET'])
 @jwt_required()
-@response(UserSchema(many=True), 200)
+@response(UserSchema(many=True), HTTPStatus.OK)
 @rate_limit(by_email=True, by_ip=True)
 @check_access(USER_ALL.READ)
 def get_all_users():
@@ -132,7 +132,7 @@ def get_all_users():
 
 @users_api_blueprint.route('/<user_id>', methods=['GET'])
 @jwt_required()
-@response(user_schema, 200)
+@response(user_schema, HTTPStatus.OK)
 @rate_limit(by_email=True, by_ip=True)
 @check_access(USER_SELF.READ)
 def get_user(user_id: str):
@@ -146,7 +146,7 @@ def get_user(user_id: str):
 
 @users_api_blueprint.route('/<user_id>/role', methods=['GET'])
 @jwt_required()
-@response(new_role_schema, 200)
+@response(new_role_schema, HTTPStatus.OK)
 @rate_limit(by_email=True, by_ip=True)
 @check_access([USER_SELF.READ])
 def get_user_role(user_id: str):
@@ -173,7 +173,7 @@ def get_user_role(user_id: str):
 
 @users_api_blueprint.route('/<user_id>/role/<role_id>', methods=['PUT'])
 @jwt_required()
-@response(user_role_schema, 200)
+@response(user_role_schema, HTTPStatus.OK)
 @rate_limit(by_email=True, by_ip=True)
 @check_access([USER_SELF.UPDATE, USER_ALL.UPDATE])
 def set_user_role(user_id: str, role_id: str):
@@ -199,7 +199,7 @@ def set_user_role(user_id: str, role_id: str):
 @users_api_blueprint.route('/<user_id>/history', methods=['GET'])
 @jwt_required()
 @body(pagination_schema)
-@response(paginated_history_schema, 200)
+@response(paginated_history_schema, HTTPStatus.OK)
 @rate_limit(by_email=True, by_ip=True)
 @check_access([USER_SELF.READ, USER_ALL.READ])
 def get_user_session_history(kwargs, user_id: str):
@@ -217,7 +217,7 @@ def get_user_session_history(kwargs, user_id: str):
 @users_api_blueprint.route('/check_access', methods=['GET'])
 @jwt_required()
 @rate_limit(by_email=True, by_ip=True)
-@response(message_schema)
+@response(message_schema, HTTPStatus.OK)
 def check_access():
     """validate token"""
     jwt = get_jwt()

@@ -18,7 +18,7 @@ from . import auth_api_blueprint
 @auth_api_blueprint.route('/login', methods=['POST'])
 @rate_limit(by_ip=True)
 @body(login_schema)
-@response(token_schema)
+@response(token_schema, HTTPStatus.OK)
 def login(kwargs):
     """Login endpoint"""
     if not kwargs:
@@ -43,7 +43,7 @@ def login(kwargs):
 @auth_api_blueprint.route('/logout', methods=['DELETE'])
 @jwt_required()
 @rate_limit(by_email=True, by_ip=True)
-@response(message_schema)
+@response(message_schema, HTTPStatus.OK)
 def logout():
     """Logout endpoint"""
     jwt = get_jwt()
@@ -75,7 +75,7 @@ def authorize(provider: str):
 
     if not user:
         reg_url = url_for('users.register')
-        return redirect(reg_url, 302)
+        return redirect(reg_url, HTTPStatus.FOUND)
 
     additional_claims = {'role_id': user.role_id}
     access_token = create_access_token(identity=email, additional_claims=additional_claims)
